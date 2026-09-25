@@ -65,10 +65,12 @@ export function isLate(job: Job, today: Date = new Date()): boolean {
   return daysSince(job.due_date, today) > 0;
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 /** "25-Sep" */
 export function shortDate(iso: string): string {
   const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  return `${String(d.getDate()).padStart(2, '0')}-${d.toLocaleString('en-GB', { month: 'short' })}`;
+  return `${String(d.getDate()).padStart(2, '0')}-${MONTHS[d.getMonth()]}`;
 }
 
 function check<T>(res: { data: T | null; error: { message: string } | null }): T {

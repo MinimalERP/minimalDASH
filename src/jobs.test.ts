@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./supabase', () => ({ supabase: {} }));
-const { byUrgency, daysSince, isLate } = await import('./jobs');
+const { byUrgency, daysSince, isLate, shortDate } = await import('./jobs');
 import type { Job } from './jobs';
 
 const job = (over: Partial<Job>): Job => ({
@@ -16,6 +16,11 @@ describe('jobs', () => {
     expect(daysSince('2026-09-24', today)).toBe(1);
     expect(daysSince('2026-09-25', today)).toBe(0);
     expect(daysSince('2026-09-30', today)).toBe(0);
+  });
+
+  it('writes dates short: day and a three-letter month', () => {
+    expect(shortDate('2026-09-04')).toBe('04-Sep');
+    expect(shortDate('2026-06-24T12:00:00+05:30')).toBe('24-Jun');
   });
 
   it('is late only after the due date has passed', () => {

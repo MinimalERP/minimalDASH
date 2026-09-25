@@ -1,13 +1,20 @@
 import { Fragment } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { sendUpload } from './upload';
+import { emptyUpload, UploadFields } from './UploadFields';
 import { addNote, daysSince, gmailThreadUrl, loadJob, MOVE_LABEL, setMove, shortDate, WHO_LABEL, type Job, type JobEvent, type Move, type Part } from './jobs';
 
-/** One job: what's asked, whose move, the parts, and the timeline. Esc goes back, Alt+N writes a note. */
-export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; onBack: () => void }) {
+/** One job: what's asked, whose move, the parts, and the timeline. Esc goes back, Alt+N writes a note, Alt+U adds a WhatsApp message or files. */
+export function JobView({ id, mailbox, notice, onBack }: { id: string; mailbox: string; notice?: string | undefined; onBack: () => void }) {
   const [data, setData] = useState<{ job: Job; parts: Part[]; events: JobEvent[] } | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const noteRef = useRef<HTMLTextAreaElement>(null);
+  const [upload, setUpload] = useState(emptyUpload);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [problem, setProblem] = useState<string | null>(notice ?? null);
+  const uploadRef = useRef<HTMLTextAreaElement>(null);
 
   const reload = () => loadJob(id).then(setData, (e: Error) => setError(e.message));
   useEffect(() => {
@@ -18,15 +25,19 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         if (document.activeElement === noteRef.current && note) return;
+        if (uploadOpen) return setUploadOpen(false);
         onBack();
       } else if (e.altKey && e.key.toLowerCase() === 'n') {
         noteRef.current?.focus();
+      } else if (e.altKey && e.key.toLowerCase() === 'u') {
+        setUploadOpen(true);
+        setTimeout(() => uploadRef.current?.focus());
       } else return;
       e.preventDefault();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onBack, note]);
+  }, [onBack, note, uploadOpen]);
 
   async function save(e: Event) {
     e.preventDefault();
@@ -38,6 +49,21 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  async function sendIt(e: Event) {
+    e.preventDefault();
+    setUploading(true);
+    setProblem(null);
+    try {
+      await sendUpload(id, upload.via, upload.text, upload.files);
+      setUpload(emptyUpload());
+      setUploadOpen(false);
+      await reload();
+    } catch (err) {
+      setProblem((err as Error).message);
+    }
+    setUploading(false);
   }
 
   async function changeMove(move: Move) {
@@ -70,6 +96,11 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
         </a>{' '}
         <kbd>Esc</kbd>
       </p>
+      {problem && (
+        <p class="message error" role="alert">
+          {problem}
+        </p>
+      )}
       <section class="job-head">
         <h1>{job.title}</h1>
         <div class="muted">
@@ -158,9 +189,9 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
                 <details class="mail">
                   <summary>{ev.summary}</summary>
                   <div class="mail-head">
-                    <div>From: {ev.mail_from}</div>
+                    <div>{ev.gmail_message_id ? 'From' : 'Came by'}: {ev.mail_from}</div>
                     {ev.mail_to && <div>To: {ev.mail_to}</div>}
-                    <div>Subject: {ev.mail_subject}</div>
+                    {ev.mail_subject && <div>Subject: {ev.mail_subject}</div>}
                   </div>
                   <div class="mail-body">{ev.body}</div>
                 </details>
@@ -201,6 +232,26 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
       <p class="hint">
         <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves the note
       </p>
+
+      {uploadOpen ? (
+        <form class="add-upload" onSubmit={sendIt}>
+          <h2>Add a WhatsApp message, a call or files</h2>
+          <UploadFields value={upload} onChange={setUpload} textRef={uploadRef} />
+          <button class="button primary" type="submit" disabled={uploading}>
+            {uploading ? 'Sending…' : 'Add to this job'}
+          </button>{' '}
+          <button class="button" type="button" onClick={() => setUploadOpen(false)}>
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <p>
+          <button class="button" type="button" onClick={() => (setUploadOpen(true), setTimeout(() => uploadRef.current?.focus()))}>
+            Add WhatsApp / call / files
+          </button>{' '}
+          <kbd>Alt</kbd>+<kbd>U</kbd>
+        </p>
+      )}
     </>
   );
 }

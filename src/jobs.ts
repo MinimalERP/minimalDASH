@@ -107,6 +107,10 @@ export async function loadJob(id: string): Promise<{ job: Job; parts: Part[]; ev
   return found && { job: found, parts: check<Part[]>(parts), events: check<JobEvent[]>(events) };
 }
 
+export async function createJob(fields: { title: string; customer: string; contact: string }): Promise<string> {
+  return check<{ id: string }>(await supabase.from('jobs').insert(fields).select('id').single()).id;
+}
+
 export async function addNote(jobId: string, summary: string): Promise<void> {
   check(await supabase.from('job_events').insert({ job_id: jobId, who: 'note', summary }));
 }

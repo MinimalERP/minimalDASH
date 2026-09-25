@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { daysSince, isLate, loadOpenJobs, MOVE_LABEL, shortDate, type Job } from './jobs';
 
-/** Open jobs, our move first. ↑/↓ moves, Enter opens. */
-export function JobsList({ onOpen }: { onOpen: (id: string) => void }) {
+/** Open jobs, our move first. ↑/↓ moves, Enter opens, Alt+N starts a new job. */
+export function JobsList({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: () => void }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
@@ -14,6 +14,7 @@ export function JobsList({ onOpen }: { onOpen: (id: string) => void }) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (e.altKey && e.key.toLowerCase() === 'n') return e.preventDefault(), onNew();
       if (!jobs?.length || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === 'ArrowDown') setActive((i) => Math.min(i + 1, jobs.length - 1));
       else if (e.key === 'ArrowUp') setActive((i) => Math.max(i - 1, 0));
@@ -23,7 +24,7 @@ export function JobsList({ onOpen }: { onOpen: (id: string) => void }) {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [jobs, active, onOpen]);
+  }, [jobs, active, onOpen, onNew]);
 
   useEffect(() => {
     tableRef.current?.querySelector('tr.active')?.scrollIntoView({ block: 'nearest' });
@@ -35,12 +36,18 @@ export function JobsList({ onOpen }: { onOpen: (id: string) => void }) {
   const ours = jobs.filter((j) => j.whose_move === 'us').length;
   return (
     <>
-      <h1>Jobs</h1>
+      <div class="title-row">
+        <h1>Jobs</h1>
+        <button class="button primary" type="button" onClick={onNew}>
+          New job
+        </button>
+        <kbd>Alt</kbd>+<kbd>N</kbd>
+      </div>
       <p class="hint">
         {jobs.length} open · <span class={ours ? 'late' : ''}>{ours} waiting on us</span> · <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> opens
       </p>
       {jobs.length === 0 ? (
-        <p class="muted">No open jobs yet. They arrive from Gmail with the “New job” button.</p>
+        <p class="muted">No open jobs yet. Start one from a mail with Gmail’s “New job” button, or here with New job for a WhatsApp message, a call or a visit.</p>
       ) : (
         <div class="scroll-x">
           <table class="grid" ref={tableRef}>

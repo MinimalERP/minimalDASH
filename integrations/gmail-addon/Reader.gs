@@ -149,7 +149,7 @@ function prompt_(job, ev) {
     '@' + (prop_('OUR_DOMAIN', false) || 'micro-components.com') + ' are ours; the others are from the customer.',
     '',
     'Job: ' + job.title + (job.customer ? ' (customer ' + job.customer + ')' : ''),
-    'This mail is from ' + (ev.who === 'us' ? 'US' : 'THE CUSTOMER') + '.',
+    (ev.gmail_message_id ? 'This mail' : 'This message (it came by ' + ev.mail_from + ' and was uploaded by us)') + ' is from ' + (ev.who === 'us' ? 'US' : 'THE CUSTOMER') + '.',
     'From: ' + ev.mail_from,
     'To: ' + ev.mail_to,
     'Subject: ' + ev.mail_subject,

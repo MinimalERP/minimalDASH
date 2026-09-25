@@ -23,15 +23,18 @@ function isZip_(blob) {
 
 /** Saves the mail's files; returns the job folder's address, a link per file, and the ids of the files Gemini can read. */
 function saveToDrive_(job, message, fromUs) {
+  var name = Utilities.formatDate(message.getDate(), 'Asia/Kolkata', 'yyyy-MM-dd HHmm') + (fromUs ? ' Us' : ' Customer');
+  return saveBlobs_(job, mailFiles_(message).map(function (a) { return a.copyBlob(); }), name);
+}
+
+/** Saves files in their own folder inside the job's folder (zips unzipped). Used for mails and for uploads from minimalDASH. */
+function saveBlobs_(job, blobs, folderName) {
   var jobFolder = jobFolder_(job);
   var result = { folderUrl: jobFolder.getUrl(), links: [], readableIds: [] };
-  var files = mailFiles_(message);
-  if (!files.length) return result;
+  if (!blobs.length) return result;
 
-  var name = Utilities.formatDate(message.getDate(), 'Asia/Kolkata', 'yyyy-MM-dd HHmm') + (fromUs ? ' Us' : ' Customer');
-  var mailFolder = childFolder_(jobFolder, name);
-  files.forEach(function (a) {
-    var blob = a.copyBlob();
+  var mailFolder = childFolder_(jobFolder, folderName);
+  blobs.forEach(function (blob) {
     if (isZip_(blob)) {
       blob.setContentType('application/zip');
       Utilities.unzip(blob).forEach(function (inner) {

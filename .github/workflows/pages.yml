@@ -35,6 +35,7 @@ jobs:
           VITE_BASE: /${{ github.event.repository.name }}/
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          VITE_UPLOAD_URL: ${{ vars.UPLOAD_URL }} # the Gmail add-on's web app (/exec); without it, uploads can carry text only
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -50,6 +50,19 @@ From then on, `readQueue` runs every minute and returns at once when there is no
 **Deploy › Test deployments › Google Workspace add-on › Install**. Reload Gmail and open any mail: the minimalDASH icon appears in the
 right-hand panel. The first time, Gmail asks you to allow the permissions.
 
+### 5. Uploads from minimalDASH (WhatsApp, calls, visits)
+With this, **New job** in minimalDASH and **Add WhatsApp / call / files** on a job can send files. Without it you can still write
+the message, but files can't be sent.
+
+1. In the same Apps Script project: **Deploy › New deployment**, type **Web app**, *Execute as: Me*, *Who has access: Anyone*.
+2. Copy the address ending in `/exec` and send it to be set as the site's `UPLOAD_URL` repository variable.
+
+Anyone can reach the address, but it accepts only a request carrying your minimalDASH sign-in, checked with Supabase. Files are saved in
+the job's Drive folder (`<date time> WhatsApp` and so on), and Gemini reads them like a mail's.
+
+After you change the code later, update this deployment with **Deploy › Manage deployments › Edit › Version: New version**, so the
+same address runs the new code.
+
 ## What it may do (the permissions it asks for)
 - `gmail.addons.current.message.readonly`: read the mail you have open, only when you use the panel. It cannot read your mailbox.
 - `drive`: create the `minimalDASH` folder and save the attachments in it.

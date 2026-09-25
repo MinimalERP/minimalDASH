@@ -37,7 +37,7 @@ export interface JobEvent {
   at: string;
   who: Who;
   summary: string;
-  gmail_link: string | null;
+  gmail_message_id: string | null;
   files: string[];
 }
 
@@ -63,6 +63,19 @@ export function byUrgency(a: Job, b: Job): number {
 export function isLate(job: Job, today: Date = new Date()): boolean {
   if (!job.due_date) return false;
   return daysSince(job.due_date, today) > 0;
+}
+
+/** Gmail addressed by mailbox, not by position: /u/0/ is whichever Google account happens to be first in the browser. */
+function gmailBase(mailbox: string): string {
+  return `https://mail.google.com/mail/u/${encodeURIComponent(mailbox)}/`;
+}
+
+export function gmailMessageUrl(mailbox: string, messageId: string): string {
+  return `${gmailBase(mailbox)}#search/${encodeURIComponent(`rfc822msgid:${messageId}`)}`;
+}
+
+export function gmailThreadUrl(mailbox: string, threadId: string): string {
+  return `${gmailBase(mailbox)}#all/${threadId}`;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

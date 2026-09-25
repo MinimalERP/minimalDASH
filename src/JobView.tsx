@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { addNote, daysSince, loadJob, MOVE_LABEL, setMove, shortDate, WHO_LABEL, type Job, type JobEvent, type Move, type Part } from './jobs';
+import { addNote, daysSince, gmailMessageUrl, gmailThreadUrl, loadJob, MOVE_LABEL, setMove, shortDate, WHO_LABEL, type Job, type JobEvent, type Move, type Part } from './jobs';
 
 /** One job: what's asked, whose move, the parts, and the timeline. Esc goes back, Alt+N writes a note. */
-export function JobView({ id, onBack }: { id: string; onBack: () => void }) {
+export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; onBack: () => void }) {
   const [data, setData] = useState<{ job: Job; parts: Part[]; events: JobEvent[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -88,7 +88,7 @@ export function JobView({ id, onBack }: { id: string; onBack: () => void }) {
             </a>
           )}
           {job.gmail_thread_id && (
-            <a href={`https://mail.google.com/mail/u/0/#all/${job.gmail_thread_id}`} target="_blank" rel="noreferrer">
+            <a href={gmailThreadUrl(mailbox, job.gmail_thread_id)} target="_blank" rel="noreferrer">
               Gmail thread ↗
             </a>
           )}
@@ -144,8 +144,8 @@ export function JobView({ id, onBack }: { id: string; onBack: () => void }) {
             <span class="when">{shortDate(ev.at)}</span>
             <span class={`by ${ev.who}`}>{WHO_LABEL[ev.who]}</span>
             <span>
-              {ev.gmail_link ? (
-                <a href={ev.gmail_link} target="_blank" rel="noreferrer">
+              {ev.gmail_message_id ? (
+                <a href={gmailMessageUrl(mailbox, ev.gmail_message_id)} target="_blank" rel="noreferrer">
                   {ev.summary}
                 </a>
               ) : (

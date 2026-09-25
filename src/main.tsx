@@ -45,7 +45,7 @@ function App() {
           Sign out
         </button>
       </header>
-      <main>{jobId ? <JobView id={jobId} onBack={back} /> : <JobsList onOpen={open} />}</main>
+      <main>{jobId ? <JobView id={jobId} mailbox={session.user.email ?? ''} onBack={back} /> : <JobsList onOpen={open} />}</main>
     </>
   );
 }

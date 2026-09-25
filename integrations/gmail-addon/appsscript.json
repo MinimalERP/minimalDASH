@@ -3,7 +3,7 @@
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "webapp": { "executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS" },
-  "urlFetchWhitelist": ["https://cqtffnqaffebnzzoazdo.supabase.co/", "https://generativelanguage.googleapis.com/"],
+  "urlFetchWhitelist": ["https://iifxhhnwhglhyxroqiqa.supabase.co/", "https://generativelanguage.googleapis.com/"],
   "oauthScopes": [
     "https://www.googleapis.com/auth/gmail.addons.execute",
     "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",

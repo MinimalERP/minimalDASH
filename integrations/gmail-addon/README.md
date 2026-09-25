@@ -23,7 +23,10 @@ Nothing watches your mailbox. A mail reaches minimalDASH only when you press a b
 
 ## One-time setup (about 15 minutes)
 
-Do all of this signed in to Google as **info@micro-components.com**.
+Do all of this signed in to Google as **info@micro-components.com**, the mailbox the customers write to.
+
+minimalDASH's jobs live in minimalERP's database. The add-on signs in to it as the ERP's add-on user **erp-bot**, the same one the
+MinimalERP add-on uses. It may file jobs, mails and Gemini's readings, and cannot post any voucher.
 
 ### 1. Gemini key
 Go to <https://aistudio.google.com/apikey> and create an API key (free). You can use the same key as MinimalERP.
@@ -37,9 +40,10 @@ Go to <https://aistudio.google.com/apikey> and create an API key (free). You can
 3. In the editor:
    - replace the content of `appsscript.json` with this folder's `appsscript.json`
    - delete `Code.gs`
-   - add four script files with the same names and content: `Dash.gs`, `Addon.gs`, `Drive.gs`, `Reader.gs` (**+** › Script)
-4. **Project Settings › Script properties**: add each line of `C:\Users\padek\minimalDASH-samples\addon-settings.txt`. Put your own
-   minimalDASH password (the one you sign in with) in `DASH_PASSWORD`, and your Gemini key in `GEMINI_API_KEY`.
+   - add five script files with the same names and content: `Dash.gs`, `Addon.gs`, `Drive.gs`, `Reader.gs`, `Upload.gs` (**+** › Script)
+4. **Project Settings › Script properties**: add each line of `C:\Users\padek\minimalDASH-samples\addon-settings.txt`:
+   - `DASH_PASSWORD`: erp-bot's password, the same as `ERP_PASSWORD` in the MinimalERP add-on's Script properties
+   - `GEMINI_API_KEY`: your Gemini key
    - Optional: `GEMINI_MODEL`, a comma-separated list of models to try in order, if the default ones are not available to your key.
 
 ### 3. Start the background reader (once)

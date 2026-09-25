@@ -198,7 +198,7 @@ export function JobView({ id, mailbox, notice, onBack }: { id: string; mailbox: 
               ) : (
                 ev.summary
               )}
-              {ev.file_links.length > 0 ? (
+              {ev.file_links.length > 0 && (
                 <div class="files">
                   {ev.file_links.map((f, i) => (
                     <Fragment key={f.url}>
@@ -209,8 +209,6 @@ export function JobView({ id, mailbox, notice, onBack }: { id: string; mailbox: 
                     </Fragment>
                   ))}
                 </div>
-              ) : (
-                ev.files.length > 0 && <div class="files">{ev.files.join(' · ')}</div>
               )}
             </span>
           </li>

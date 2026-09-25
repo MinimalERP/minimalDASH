@@ -65,17 +65,17 @@ function readQueue() {
 
 function markUnread_(item, why) {
   try {
-    var ev = rest_('get', 'job_events?id=eq.' + q_(item.eventId) + '&select=mail_subject')[0];
-    if (ev) rest_('patch', 'job_events?id=eq.' + q_(item.eventId), { summary: (ev.mail_subject || 'Mail') + ' — not read by Gemini: ' + why.slice(0, 300) });
+    var ev = get_('dash_events?id=eq.' + q_(item.eventId) + '&select=mail_subject')[0];
+    if (ev) dash_('event.update', { id: item.eventId, summary: (ev.mail_subject || 'Mail') + ' — not read by Gemini: ' + why.slice(0, 300) });
   } catch (e) {
     console.error(e);
   }
 }
 
 function read_(item) {
-  var ev = rest_('get', 'job_events?id=eq.' + q_(item.eventId) + '&select=*,jobs(*)')[0];
+  var ev = get_('dash_events?id=eq.' + q_(item.eventId) + '&select=*,dash_jobs(*)')[0];
   if (!ev) return; // deleted meanwhile
-  var job = ev.jobs;
+  var job = ev.dash_jobs;
 
   var parts = [{ text: prompt_(job, ev) }];
   var total = 0;
@@ -100,14 +100,14 @@ function read_(item) {
 
   var r = gemini_(parts);
 
-  rest_('patch', 'job_events?id=eq.' + q_(ev.id), { summary: (r.summary || ev.mail_subject || 'Mail').slice(0, 2000) });
+  dash_('event.update', { id: ev.id, summary: (r.summary || ev.mail_subject || 'Mail').slice(0, 2000) });
 
   var jobChange = {};
   if (r.customer && (item.newJob || !job.customer)) jobChange.customer = r.customer.slice(0, 200);
   if (r.contact && !job.contact) jobChange.contact = r.contact.slice(0, 200);
   if (r.asked && ev.who === 'customer') jobChange.asked = r.asked.slice(0, 1000);
   if (/^\d{4}-\d{2}-\d{2}$/.test(r.dueDate || '')) jobChange.due_date = r.dueDate;
-  if (Object.keys(jobChange).length) rest_('patch', 'jobs?id=eq.' + q_(job.id), jobChange);
+  if (Object.keys(jobChange).length) dash_('job.update', Object.assign({ id: job.id }, jobChange));
 
   savePartsRead_(job.id, r.parts || [], ev.file_links || []);
 }
@@ -116,29 +116,28 @@ function key_(drawingNo) {
   return String(drawingNo || '').toUpperCase().replace(/[\s_]+/g, '-');
 }
 
-/** A part already in the job keeps what it has unless the new drawing says something (a new rev, a material); new drawing numbers are added. */
+/**
+ * One part per drawing number (the database's part.save matches it whatever its case). A part already in the job keeps what it has
+ * unless the new drawing says something (a new rev, a material); new drawing numbers are added. The drawing's own file is linked.
+ */
 function savePartsRead_(jobId, read, links) {
-  var existing = rest_('get', 'parts?job_id=eq.' + q_(jobId) + '&select=*');
   read.forEach(function (p) {
     var k = key_(p.drawingNo);
     if (!k) return;
-    var fields = { name: p.name, rev: p.rev, material: p.material, finish: p.finish, next_assy: p.nextAssy, qty: p.qty };
-    Object.keys(fields).forEach(function (f) {
-      fields[f] = String(fields[f] || '').trim().slice(0, 500);
-      if (!fields[f]) delete fields[f];
-    });
     var file = links
       .filter(function (l) { return key_(l.name).indexOf(k) >= 0; })
       .sort(function (a, b) { return (/\.pdf$/i.test(a.name) ? 0 : 1) - (/\.pdf$/i.test(b.name) ? 0 : 1); })[0];
-    if (file) fields.drive_file_url = file.url;
-    var same = existing.filter(function (e) { return key_(e.drawing_no) === k; })[0];
-    if (same) {
-      if (Object.keys(fields).length) rest_('patch', 'parts?id=eq.' + q_(same.id), fields);
-    } else {
-      fields.job_id = jobId;
-      fields.drawing_no = String(p.drawingNo).trim().toUpperCase().slice(0, 100);
-      existing.push(rest_('post', 'parts', fields)[0]);
-    }
+    dash_('part.save', {
+      job_id: jobId,
+      drawing_no: k.slice(0, 100),
+      name: String(p.name || '').slice(0, 300),
+      rev: String(p.rev || '').slice(0, 50),
+      material: String(p.material || '').slice(0, 300),
+      finish: String(p.finish || '').slice(0, 500),
+      next_assy: String(p.nextAssy || '').slice(0, 100),
+      qty: String(p.qty || '').slice(0, 50),
+      drive_file_url: file ? file.url : '',
+    });
   });
 }
 

@@ -1,3 +1,4 @@
+import { companyId, dash } from './company';
 import { supabase } from './supabase';
 
 export type Move = 'us' | 'customer' | 'vendor';
@@ -42,8 +43,7 @@ export interface JobEvent {
   mail_to: string;
   mail_subject: string;
   body: string; // the mail's own text; the quoted earlier mails are cut off
-  files: string[];
-  file_links: { name: string; url: string }[]; // saved in Drive by the Gmail add-on
+  file_links: { name: string; url: string }[]; // saved in Google Drive (by the Gmail add-on or an upload)
 }
 
 export const MOVE_LABEL: Record<Move, string> = { us: 'OUR MOVE', customer: 'Waiting for customer', vendor: 'Waiting for vendor' };
@@ -93,28 +93,28 @@ function check<T>(res: { data: T | null; error: { message: string } | null }): T
 }
 
 export async function loadOpenJobs(): Promise<Job[]> {
-  return check(await supabase.from('jobs').select('*').eq('status', 'open')).sort(byUrgency);
+  return check(await supabase.from('dash_jobs').select('*').eq('company_id', companyId()).eq('status', 'open')).sort(byUrgency);
 }
 
 /** null: no such job (deleted, or an old link). */
 export async function loadJob(id: string): Promise<{ job: Job; parts: Part[]; events: JobEvent[] } | null> {
   const [job, parts, events] = await Promise.all([
-    supabase.from('jobs').select('*').eq('id', id).maybeSingle(),
-    supabase.from('parts').select('*').eq('job_id', id).order('drawing_no'),
-    supabase.from('job_events').select('*').eq('job_id', id).order('at'),
+    supabase.from('dash_jobs').select('*').eq('id', id).maybeSingle(),
+    supabase.from('dash_parts').select('*').eq('job_id', id).order('drawing_no'),
+    supabase.from('dash_events').select('*').eq('job_id', id).order('at'),
   ]);
   const found = check<Job | null>(job);
   return found && { job: found, parts: check<Part[]>(parts), events: check<JobEvent[]>(events) };
 }
 
 export async function createJob(fields: { title: string; customer: string; contact: string }): Promise<string> {
-  return check<{ id: string }>(await supabase.from('jobs').insert(fields).select('id').single()).id;
+  return (await dash<{ id: string }>('job.create', fields)).id;
 }
 
 export async function addNote(jobId: string, summary: string): Promise<void> {
-  check(await supabase.from('job_events').insert({ job_id: jobId, who: 'note', summary }));
+  await dash('event.add', { job_id: jobId, who: 'note', summary });
 }
 
 export async function setMove(jobId: string, whose_move: Move): Promise<void> {
-  check(await supabase.from('jobs').update({ whose_move, move_since: new Date().toISOString().slice(0, 10) }).eq('id', jobId));
+  await dash('job.update', { id: jobId, whose_move, move_since: new Date().toISOString().slice(0, 10) });
 }

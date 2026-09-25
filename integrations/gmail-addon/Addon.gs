@@ -84,23 +84,23 @@ function fileMail_(e, jobId) {
     if (jobId) {
       job = getJob_(jobId);
       if (!job) return notify_('That job is gone: open the mail again.');
-      if (!job.gmail_thread_id && !jobForThread_(threadId)) job = rest_('patch', 'jobs?id=eq.' + q_(job.id), { gmail_thread_id: threadId })[0];
+      if (!job.gmail_thread_id && !jobForThread_(threadId)) job = dash_('job.update', { id: job.id, gmail_thread_id: threadId });
     } else {
       job = jobForThread_(threadId); // pressed twice: the same job, not a second one
       if (!job) {
-        job = rest_('post', 'jobs', {
+        job = dash_('job.create', {
           title: cleanSubject_(message.getSubject()) || 'New job',
           customer: fromUs ? '' : customerOf_(message.getFrom()),
           contact: fromUs ? '' : nameOf_(message.getFrom()),
           whose_move: fromUs ? 'customer' : 'us',
           move_since: ymd_(at),
           gmail_thread_id: threadId,
-        })[0];
+        });
       }
     }
 
     var saved = saveToDrive_(job, message, fromUs);
-    if (saved.folderUrl !== job.drive_folder_url) rest_('patch', 'jobs?id=eq.' + q_(job.id), { drive_folder_url: saved.folderUrl });
+    if (saved.folderUrl !== job.drive_folder_url) dash_('job.update', { id: job.id, drive_folder_url: saved.folderUrl });
 
     var entry = {
       job_id: job.id,
@@ -110,17 +110,15 @@ function fileMail_(e, jobId) {
       mail_to: [message.getTo(), message.getCc()].filter(String).join(', ').slice(0, 2000),
       mail_subject: message.getSubject().slice(0, 500),
       body: newText_(message.getPlainBody()).slice(0, MAX_TEXT_),
-      gmail_message_id: messageId,
+      gmail_message_id: messageId || null,
       file_links: saved.links,
     };
-    var existing = rest_('get', 'job_events?job_id=eq.' + q_(job.id) + '&gmail_message_id=eq.' + q_(messageId) + '&select=id');
-    var event = existing.length
-      ? rest_('patch', 'job_events?id=eq.' + q_(existing[0].id), entry)[0]
-      : rest_('post', 'job_events', Object.assign({ summary: entry.mail_subject || '(no subject)' }, entry))[0];
+    // the same mail filed again refreshes its entry and keeps Gemini's summary
+    var event = dash_('event.add', Object.assign({ summary: entry.mail_subject || '(no subject)' }, entry));
 
     // the newest mail decides whose move it is: theirs → ours; ours → we wait for them
-    var later = rest_('get', 'job_events?job_id=eq.' + q_(job.id) + '&who=in.(us,customer)&at=gt.' + q_(entry.at) + '&select=id&limit=1');
-    if (!later.length) rest_('patch', 'jobs?id=eq.' + q_(job.id), { whose_move: fromUs ? 'customer' : 'us', move_since: ymd_(at) });
+    var later = get_('dash_events?job_id=eq.' + q_(job.id) + '&who=in.(us,customer)&at=gt.' + q_(entry.at) + '&select=id&limit=1');
+    if (!later.length) dash_('job.update', { id: job.id, whose_move: fromUs ? 'customer' : 'us', move_since: ymd_(at) });
 
     queueReading_({ eventId: event.id, jobId: job.id, fileIds: saved.readableIds, newJob: !jobId });
 

@@ -2,8 +2,9 @@
  * Uploads from minimalDASH: an enquiry that came by WhatsApp, a call, a visit… Deployed as a web app (see README), so the site can
  * send it files: they are saved in the job's Drive folder like a mail's, the message joins the timeline, and Gemini reads both.
  *
- * Anyone can reach the address, so every request must carry a minimalDASH sign-in: it is checked with Supabase, and only the owner
- * (DASH_EMAIL) is accepted.
+ * Anyone can reach the address, so every request carries the person's own minimalERP sign-in, and everything is done AS THAT PERSON:
+ * the job must be one they can see, and the entry is saved through the `dash` function, which checks their dash.edit permission.
+ * Nothing is saved in Drive before the job is found that way.
  *
  * Request (POST, text/plain so the browser sends it without a preflight):
  *   { token, jobId, via: 'WhatsApp', text: '…', files: [{ name, type, base64 }] }
@@ -14,9 +15,14 @@ var MAX_UPLOAD_BYTES_ = 40 * 1024 * 1024;
 function doPost(e) {
   try {
     var req = JSON.parse(e.postData.contents);
-    checkSignIn_(req.token);
-    var job = getJob_(req.jobId);
-    if (!job) return answer_({ ok: false, message: 'That job is gone.' });
+    if (!req.token) return answer_({ ok: false, message: 'Not signed in.' });
+    var job;
+    try {
+      job = getJob_(req.jobId, req.token);
+    } catch (e) {
+      return answer_({ ok: false, message: 'Your sign-in has expired: reload the page.' });
+    }
+    if (!job) return answer_({ ok: false, message: 'That job is gone, or you may not see it.' });
 
     var total = 0;
     var blobs = (req.files || []).map(function (f) {
@@ -29,10 +35,10 @@ function doPost(e) {
     var via = String(req.via || 'Upload').slice(0, 40);
     var now = new Date();
     var saved = saveBlobs_(job, blobs, Utilities.formatDate(now, 'Asia/Kolkata', 'yyyy-MM-dd HHmm') + ' ' + via);
-    if (saved.folderUrl !== job.drive_folder_url) rest_('patch', 'jobs?id=eq.' + q_(job.id), { drive_folder_url: saved.folderUrl });
+    if (saved.folderUrl !== job.drive_folder_url) dash_('job.update', { id: job.id, drive_folder_url: saved.folderUrl }, req.token);
 
     var text = String(req.text || '').slice(0, MAX_TEXT_);
-    var event = rest_('post', 'job_events', {
+    var event = dash_('event.add', {
       job_id: job.id,
       at: now.toISOString(),
       who: 'customer',
@@ -40,8 +46,8 @@ function doPost(e) {
       mail_from: via,
       body: text,
       file_links: saved.links,
-    })[0];
-    rest_('patch', 'jobs?id=eq.' + q_(job.id), { whose_move: 'us', move_since: ymd_(now) });
+    }, req.token);
+    dash_('job.update', { id: job.id, whose_move: 'us', move_since: ymd_(now) }, req.token);
     if (text || saved.readableIds.length) queueReading_({ eventId: event.id, jobId: job.id, fileIds: saved.readableIds, newJob: !job.customer });
 
     return answer_({ ok: true, eventId: event.id, files: saved.links.length });
@@ -49,18 +55,6 @@ function doPost(e) {
     console.error(err);
     return answer_({ ok: false, message: String(err.message || err) });
   }
-}
-
-/** The request's sign-in must be the owner's, checked with Supabase itself. */
-function checkSignIn_(token) {
-  if (!token) throw new Error('Not signed in.');
-  var res = UrlFetchApp.fetch(prop_('SUPABASE_URL', true) + '/auth/v1/user', {
-    headers: { apikey: prop_('SUPABASE_ANON_KEY', true), Authorization: 'Bearer ' + token },
-    muteHttpExceptions: true,
-  });
-  if (res.getResponseCode() !== 200) throw new Error('Your minimalDASH sign-in has expired: reload the page.');
-  var email = String(JSON.parse(res.getContentText()).email || '').toLowerCase();
-  if (email !== prop_('DASH_EMAIL', true).toLowerCase()) throw new Error('This minimalDASH account may not upload here.');
 }
 
 function answer_(obj) {

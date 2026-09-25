@@ -1,3 +1,4 @@
+import { dash } from './company';
 import { supabase } from './supabase';
 
 /** The Gmail add-on's web app address (README, "Uploads from minimalDASH"). Without it a message can still be written, but files cannot be sent. */
@@ -26,8 +27,7 @@ export async function sendUpload(jobId: string, via: string, text: string, files
 
   if (!UPLOAD_URL) {
     if (files.length) throw new Error('Files cannot be sent yet: the upload address is not set up (see the add-on README).');
-    const { error } = await supabase.from('job_events').insert({ job_id: jobId, who: 'customer', summary: text.trim().split('\n')[0]!.slice(0, 200), mail_from: via, body: text.trim() });
-    if (error) throw new Error(error.message);
+    await dash('event.add', { job_id: jobId, who: 'customer', summary: text.trim().split('\n')[0]!.slice(0, 200), mail_from: via, body: text.trim() });
     return;
   }
 

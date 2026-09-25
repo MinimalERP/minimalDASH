@@ -1,0 +1,23 @@
+{
+  "timeZone": "Asia/Kolkata",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "urlFetchWhitelist": ["https://cqtffnqaffebnzzoazdo.supabase.co/", "https://generativelanguage.googleapis.com/"],
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/gmail.addons.execute",
+    "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ],
+  "addOns": {
+    "common": {
+      "name": "minimalDASH",
+      "logoUrl": "https://www.gstatic.com/images/icons/material/system/1x/dashboard_black_48dp.png",
+      "useLocaleFromApp": true
+    },
+    "gmail": {
+      "contextualTriggers": [{ "unconditional": {}, "onTriggerFunction": "onGmailMessageOpen" }]
+    }
+  }
+}

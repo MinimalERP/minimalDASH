@@ -1,5 +1,6 @@
+import { Fragment } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { addNote, daysSince, gmailMessageUrl, gmailThreadUrl, loadJob, MOVE_LABEL, setMove, shortDate, WHO_LABEL, type Job, type JobEvent, type Move, type Part } from './jobs';
+import { addNote, daysSince, gmailThreadUrl, loadJob, MOVE_LABEL, setMove, shortDate, WHO_LABEL, type Job, type JobEvent, type Move, type Part } from './jobs';
 
 /** One job: what's asked, whose move, the parts, and the timeline. Esc goes back, Alt+N writes a note. */
 export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; onBack: () => void }) {
@@ -144,14 +145,33 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
             <span class="when">{shortDate(ev.at)}</span>
             <span class={`by ${ev.who}`}>{WHO_LABEL[ev.who]}</span>
             <span>
-              {ev.gmail_message_id ? (
-                <a href={gmailMessageUrl(mailbox, ev.gmail_message_id)} target="_blank" rel="noreferrer">
-                  {ev.summary}
-                </a>
+              {ev.body ? (
+                <details class="mail">
+                  <summary>{ev.summary}</summary>
+                  <div class="mail-head">
+                    <div>From: {ev.mail_from}</div>
+                    {ev.mail_to && <div>To: {ev.mail_to}</div>}
+                    <div>Subject: {ev.mail_subject}</div>
+                  </div>
+                  <div class="mail-body">{ev.body}</div>
+                </details>
               ) : (
                 ev.summary
               )}
-              {ev.files.length > 0 && <div class="files">{ev.files.join(' · ')}</div>}
+              {ev.file_links.length > 0 ? (
+                <div class="files">
+                  {ev.file_links.map((f, i) => (
+                    <Fragment key={f.url}>
+                      {i > 0 && ' · '}
+                      <a href={f.url} target="_blank" rel="noreferrer">
+                        {f.name}
+                      </a>
+                    </Fragment>
+                  ))}
+                </div>
+              ) : (
+                ev.files.length > 0 && <div class="files">{ev.files.join(' · ')}</div>
+              )}
             </span>
           </li>
         ))}

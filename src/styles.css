@@ -147,3 +147,9 @@ table.grid tbody tr.active { background: var(--c-focus-bg); outline: var(--focus
 .auth-card .button { margin-top: var(--sp-4); }
 .message { min-height: 1.4em; margin: var(--sp-3) 0 0; font-size: var(--fs-sm); }
 .message.error { color: var(--c-negative); }
+
+.mail summary { cursor: pointer; }
+.mail summary:focus-visible { outline: var(--focus-ring); background: var(--c-focus-bg); }
+.mail[open] summary { font-weight: 600; margin-bottom: var(--sp-3); }
+.mail-head { color: var(--c-text-muted); font-size: var(--fs-sm); margin-bottom: var(--sp-3); overflow-wrap: anywhere; }
+.mail-body { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--sp-3); background: var(--c-surface-alt); border-radius: var(--radius); margin-bottom: var(--sp-3); }

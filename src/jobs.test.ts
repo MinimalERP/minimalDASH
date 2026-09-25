@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./supabase', () => ({ supabase: {} }));
-const { byUrgency, daysSince, gmailMessageUrl, isLate, shortDate } = await import('./jobs');
+const { byUrgency, daysSince, gmailThreadUrl, isLate, shortDate } = await import('./jobs');
 import type { Job } from './jobs';
 
 const job = (over: Partial<Job>): Job => ({
@@ -23,10 +23,8 @@ describe('jobs', () => {
     expect(shortDate('2026-06-24T12:00:00+05:30')).toBe('24-Jun');
   });
 
-  it('opens a mail in the named mailbox, found by its Message-ID', () => {
-    expect(gmailMessageUrl('info@micro-components.com', 'CAAm+x@mail.gmail.com')).toBe(
-      'https://mail.google.com/mail/u/info%40micro-components.com/#search/rfc822msgid%3ACAAm%2Bx%40mail.gmail.com',
-    );
+  it('opens a Gmail conversation in the named mailbox, not whichever account is first', () => {
+    expect(gmailThreadUrl('info@micro-components.com', '19a2b')).toBe('https://mail.google.com/mail/u/info%40micro-components.com/#all/19a2b');
   });
 
   it('is late only after the due date has passed', () => {

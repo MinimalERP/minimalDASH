@@ -38,7 +38,12 @@ export interface JobEvent {
   who: Who;
   summary: string;
   gmail_message_id: string | null;
+  mail_from: string;
+  mail_to: string;
+  mail_subject: string;
+  body: string; // the mail's own text; the quoted earlier mails are cut off
   files: string[];
+  file_links: { name: string; url: string }[]; // saved in Drive by the Gmail add-on
 }
 
 export const MOVE_LABEL: Record<Move, string> = { us: 'OUR MOVE', customer: 'Waiting for customer', vendor: 'Waiting for vendor' };
@@ -68,10 +73,6 @@ export function isLate(job: Job, today: Date = new Date()): boolean {
 /** Gmail addressed by mailbox, not by position: /u/0/ is whichever Google account happens to be first in the browser. */
 function gmailBase(mailbox: string): string {
   return `https://mail.google.com/mail/u/${encodeURIComponent(mailbox)}/`;
-}
-
-export function gmailMessageUrl(mailbox: string, messageId: string): string {
-  return `${gmailBase(mailbox)}#search/${encodeURIComponent(`rfc822msgid:${messageId}`)}`;
 }
 
 export function gmailThreadUrl(mailbox: string, threadId: string): string {

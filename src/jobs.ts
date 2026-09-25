@@ -96,13 +96,15 @@ export async function loadOpenJobs(): Promise<Job[]> {
   return check(await supabase.from('jobs').select('*').eq('status', 'open')).sort(byUrgency);
 }
 
-export async function loadJob(id: string): Promise<{ job: Job; parts: Part[]; events: JobEvent[] }> {
+/** null: no such job (deleted, or an old link). */
+export async function loadJob(id: string): Promise<{ job: Job; parts: Part[]; events: JobEvent[] } | null> {
   const [job, parts, events] = await Promise.all([
-    supabase.from('jobs').select('*').eq('id', id).single(),
+    supabase.from('jobs').select('*').eq('id', id).maybeSingle(),
     supabase.from('parts').select('*').eq('job_id', id).order('drawing_no'),
     supabase.from('job_events').select('*').eq('job_id', id).order('at'),
   ]);
-  return { job: check<Job>(job), parts: check<Part[]>(parts), events: check<JobEvent[]>(events) };
+  const found = check<Job | null>(job);
+  return found && { job: found, parts: check<Part[]>(parts), events: check<JobEvent[]>(events) };
 }
 
 export async function addNote(jobId: string, summary: string): Promise<void> {

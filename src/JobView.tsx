@@ -4,7 +4,7 @@ import { addNote, daysSince, gmailThreadUrl, loadJob, MOVE_LABEL, setMove, short
 
 /** One job: what's asked, whose move, the parts, and the timeline. Esc goes back, Alt+N writes a note. */
 export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; onBack: () => void }) {
-  const [data, setData] = useState<{ job: Job; parts: Part[]; events: JobEvent[] } | null>(null);
+  const [data, setData] = useState<{ job: Job; parts: Part[]; events: JobEvent[] } | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const noteRef = useRef<HTMLTextAreaElement>(null);
@@ -50,7 +50,16 @@ export function JobView({ id, mailbox, onBack }: { id: string; mailbox: string; 
   }
 
   if (error) return <p class="message error">{error}</p>;
-  if (!data) return <p class="muted">Loading…</p>;
+  if (data === undefined) return <p class="muted">Loading…</p>;
+  if (data === null)
+    return (
+      <p>
+        This job no longer exists.{' '}
+        <a href="#" onClick={(e) => (e.preventDefault(), onBack())}>
+          Back to Jobs
+        </a>
+      </p>
+    );
   const { job, parts, events } = data;
 
   return (

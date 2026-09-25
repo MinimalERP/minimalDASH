@@ -7,7 +7,7 @@
  *   SUPABASE_URL        https://cqtffnqaffebnzzoazdo.supabase.co
  *   SUPABASE_ANON_KEY   the project's public anon key
  *   DASH_EMAIL          your minimalDASH sign-in (info@micro-components.com)
- *   DASH_PASSWORD       the add-on password (see README)
+ *   DASH_PASSWORD       your minimalDASH password
  *   GEMINI_API_KEY      from https://aistudio.google.com/apikey
  *   GEMINI_MODEL        optional: models to try in order, comma-separated
  *   OUR_DOMAIN          optional: mail from this domain is "Us" (default micro-components.com)

@@ -38,8 +38,8 @@ Go to <https://aistudio.google.com/apikey> and create an API key (free). You can
    - replace the content of `appsscript.json` with this folder's `appsscript.json`
    - delete `Code.gs`
    - add four script files with the same names and content: `Dash.gs`, `Addon.gs`, `Drive.gs`, `Reader.gs` (**+** › Script)
-4. **Project Settings › Script properties**: add each line of `C:\Users\padek\minimalDASH-samples\addon-settings.txt`, and put your
-   Gemini key in `GEMINI_API_KEY`.
+4. **Project Settings › Script properties**: add each line of `C:\Users\padek\minimalDASH-samples\addon-settings.txt`. Put your own
+   minimalDASH password (the one you sign in with) in `DASH_PASSWORD`, and your Gemini key in `GEMINI_API_KEY`.
    - Optional: `GEMINI_MODEL`, a comma-separated list of models to try in order, if the default ones are not available to your key.
 
 ### 3. Start the background reader (once)

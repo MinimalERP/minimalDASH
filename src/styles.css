@@ -168,3 +168,18 @@ table.grid tbody tr.active { background: var(--c-focus-bg); outline: var(--focus
 .picked .button.link { border: 0; background: none; color: var(--c-accent); text-decoration: underline; padding: 0; font-size: var(--fs-sm); cursor: pointer; }
 .new-job .button.primary, .add-upload .button { margin-top: var(--sp-3); }
 .add-upload { margin-top: var(--sp-4); }
+
+/* the top bar's places */
+.topbar .tabs { display: flex; gap: var(--sp-3); }
+.topbar .tabs a { color: var(--c-text-muted); text-decoration: none; padding: var(--sp-1) var(--sp-2); border-radius: var(--radius); }
+.topbar .tabs a.here { color: var(--c-text); font-weight: 600; background: var(--c-surface-alt); }
+
+/* projects */
+.project-new { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-2); }
+.project-new input { flex: 1; min-width: 14em; }
+table.grid.projects td.actions { text-align: right; }
+table.grid.projects td .field { width: 100%; }
+.kind { font: inherit; font-size: var(--fs-sm); font-weight: 600; border: 1px solid var(--c-border); border-radius: 999px; padding: 0 var(--sp-3); cursor: pointer; background: var(--c-surface-alt); }
+.kind.recurring { color: var(--c-accent); border-color: var(--c-accent); }
+.kind.one_time { color: var(--c-text-muted); }
+.button.danger { color: var(--c-negative); border-color: var(--c-negative); }
